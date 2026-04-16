@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spotify Music Downloader</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * { font-family: 'Inter', sans-serif; }
+
+    body {
+      background: #0a0a0a;
+      min-height: 100vh;
+    }
+
+    .spotify-green { color: #1DB954; }
+    .bg-spotify-green { background-color: #1DB954; }
+    .border-spotify-green { border-color: #1DB954; }
+
+    .card {
+      background: linear-gradient(145deg, #161616, #1a1a1a);
+      border: 1px solid #2a2a2a;
+    }
+
+    .glow {
+      box-shadow: 0 0 40px rgba(29, 185, 84, 0.12);
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, #1DB954, #17a349);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-download::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.2s ease;
+    }
+
+    .btn-download:hover:not(:disabled)::after {
+      background: rgba(255,255,255,0.08);
+    }
+
+    .btn-download:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-download:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .input-url {
+      background: #111111;
+      border: 1.5px solid #2e2e2e;
+      color: #f0f0f0;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      caret-color: #1DB954;
+    }
+
+    .input-url:focus {
+      outline: none;
+      border-color: #1DB954;
+      box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.15);
+    }
+
+    .input-url::placeholder { color: #555; }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.35s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #1DB954;
+      border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.5); opacity: 0.5; }
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: linear-gradient(90deg, #1DB954, #17a349);
+      border-radius: 2px;
+      animation: progress 90s linear forwards;
+    }
+
+    @keyframes progress {
+      from { width: 0%; }
+      to   { width: 95%; }
+    }
+
+    .tag {
+      background: rgba(29, 185, 84, 0.1);
+      border: 1px solid rgba(29, 185, 84, 0.25);
+      color: #1DB954;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center px-4 py-12">
+
+  <div class="w-full max-w-lg">
+
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <!-- Spotify-style icon -->
+        <div class="w-12 h-12 bg-spotify-green rounded-full flex items-center justify-center shadow-lg">
+          <svg viewBox="0 0 24 24" fill="white" class="w-7 h-7">
+            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.622.622 0 11-.277-1.215c3.809-.87 7.076-.496 9.712 1.115a.623.623 0 01.207.857zm1.223-2.722a.78.78 0 01-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 01-.973-.519.781.781 0 01.52-.972c3.632-1.102 8.147-.568 11.233 1.328a.78.78 0 01.257 1.072zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71a.937.937 0 11-.543-1.794c3.532-1.072 9.404-.865 13.115 1.338a.937.937 0 01-.955 1.613z"/>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Spotify Downloader</h1>
+      </div>
+      <p class="text-gray-500 text-sm">Paste a Spotify track link and download it as an MP3</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card rounded-2xl p-8 glow">
+
+      <!-- Input group -->
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
+          Track URL
+        </label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+          </span>
+          <input
+            id="urlInput"
+            type="url"
+            class="input-url w-full rounded-xl pl-10 pr-4 py-3.5 text-sm"
+            placeholder="https://open.spotify.com/track/..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <p class="mt-2 text-xs text-gray-600">
+          Example: <span class="text-gray-500 font-mono">open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC</span>
+        </p>
+      </div>
+
+      <!-- Download button -->
+      <button
+        id="downloadBtn"
+        onclick="startDownload()"
+        class="btn-download w-full rounded-xl py-3.5 text-white font-semibold text-sm tracking-wide flex items-center justify-center gap-2.5"
+      >
+        <svg id="btnIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        <span id="btnText">Download MP3</span>
+      </button>
+
+      <!-- Status area -->
+      <div id="statusArea" class="mt-5 hidden"></div>
+
+    </div>
+
+    <!-- Footer hint -->
+    <p class="text-center text-xs text-gray-700 mt-6">
+      Only Spotify track links are supported &nbsp;·&nbsp; Audio is downloaded as MP3
+    </p>
+
+  </div>
+
+  <script>
+    async function startDownload() {
+      const input = document.getElementById('urlInput');
+      const btn   = document.getElementById('downloadBtn');
+      const icon  = document.getElementById('btnIcon');
+      const text  = document.getElementById('btnText');
+      const area  = document.getElementById('statusArea');
+
+      const url = input.value.trim();
+
+      // Basic client-side validation
+      if (!url) {
+        showStatus('error', 'Please paste a Spotify track URL first.');
+        input.focus();
+        return;
+      }
+      if (!url.includes('spotify.com/track')) {
+        showStatus('error', 'That doesn\'t look like a Spotify track link. Make sure it contains <code class="font-mono bg-black/30 px-1 rounded">spotify.com/track</code>.');
+        input.focus();
+        return;
+      }
+
+      // Loading state
+      btn.disabled = true;
+      icon.outerHTML = '<span id="btnIcon" class="spinner"></span>';
+      text.textContent = 'Downloading…';
+      showStatus('loading', 'Fetching track from Spotify — this may take up to a minute…');
+
+      try {
+        const res = await fetch('/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        if (!res.ok) {
+          // Try to parse JSON error
+          let msg = 'Something went wrong. Please try again.';
+          try {
+            const data = await res.json();
+            if (data.error) msg = data.error;
+          } catch (_) {}
+          throw new Error(msg);
+        }
+
+        // Derive filename from Content-Disposition header or fallback
+        const disposition = res.headers.get('Content-Disposition') || '';
+        let filename = 'track.mp3';
+        const match = disposition.match(/filename[^;=\n]*=(?:(['"])([^'"]*)\1|([^;\n]*))/i);
+        if (match) filename = decodeURIComponent((match[2] || match[3] || 'track.mp3').trim());
+
+        // Trigger browser download
+        const blob = await res.blob();
+        const objUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objUrl), 10000);
+
+        showStatus('success', `<strong class="font-semibold text-white">${escHtml(filename)}</strong> is downloading to your device.`);
+
+      } catch (err) {
+        showStatus('error', escHtml(err.message));
+      } finally {
+        // Restore button
+        btn.disabled = false;
+        document.getElementById('btnIcon').outerHTML =
+          `<svg id="btnIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>`;
+        text.textContent = 'Download MP3';
+      }
+    }
+
+    function showStatus(type, html) {
+      const area = document.getElementById('statusArea');
+      area.className = 'mt-5 fade-in';
+
+      const configs = {
+        loading: {
+          wrapper: 'bg-[#111] border border-[#2a2a2a] rounded-xl p-4 flex items-start gap-3',
+          icon: `<div class="pulse-dot mt-1 shrink-0"></div>`,
+          textClass: 'text-gray-400 text-sm leading-relaxed',
+          extra: `<div class="mt-3 bg-[#0d0d0d] rounded-lg overflow-hidden"><div class="progress-bar"></div></div>`,
+        },
+        success: {
+          wrapper: 'bg-[#0d1f12] border border-[#1a3d22] rounded-xl p-4 flex items-start gap-3',
+          icon: `<svg class="w-5 h-5 text-[#1DB954] shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                 </svg>`,
+          textClass: 'text-gray-300 text-sm leading-relaxed',
+          extra: '',
+        },
+        error: {
+          wrapper: 'bg-[#1f0d0d] border border-[#3d1a1a] rounded-xl p-4 flex items-start gap-3',
+          icon: `<svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                 </svg>`,
+          textClass: 'text-red-300 text-sm leading-relaxed',
+          extra: '',
+        },
+      };
+
+      const c = configs[type];
+      area.innerHTML = `
+        <div class="${c.wrapper}">
+          ${c.icon}
+          <div class="flex-1 min-w-0">
+            <p class="${c.textClass}">${html}</p>
+            ${c.extra}
+          </div>
+        </div>`;
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Allow pressing Enter in the input
+    document.getElementById('urlInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') startDownload();
+    });
+  </script>
+</body>
+</html>
